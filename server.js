@@ -75,3 +75,4 @@ io.on("connection", (socket) => {
 });
 
 server.listen(3000, () => console.log("Socket server started"));
+app.use("/bot", require("./routes/bots"));
