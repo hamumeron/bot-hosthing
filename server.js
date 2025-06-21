@@ -2,18 +2,23 @@ const express = require("express");
 const fs = require("fs");
 const { fork } = require("child_process");
 const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+const server = http.createServer(app); // ← こっちを使う
+const io = new Server(server);
+
+const BOTS_DIR = "./bots";
+const runningBots = {};
 
 app.use(express.static("public"));
 app.use(express.json());
 
-const BOTS_DIR = "./bots";
-const runningBots = {}; // botName: process
-
 if (!fs.existsSync(BOTS_DIR)) fs.mkdirSync(BOTS_DIR);
 
-// 新しいBot作成（token保存 & 初期コード）
+// 新しいBot作成
 app.post("/api/create", (req, res) => {
   const { name, token } = req.body;
   const botPath = path.join(BOTS_DIR, name);
@@ -59,20 +64,21 @@ app.get("/api/stop", (req, res) => {
   res.send("停止しました");
 });
 
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
-const { Server } = require("socket.io");
-const http = require("http");
-const server = http.createServer(app);
-const io = new Server(server);
-
+// WebSocketログ
 io.on("connection", (socket) => {
   socket.on("joinBotLogs", (botId) => {
-    const stream = getLogStreamForBot(botId); // Docker logsから取得
+    const stream = getLogStreamForBot(botId); // ← これはまだ仮想関数です。後で定義が必要
     stream.on("data", (chunk) => {
       socket.emit("botLog", chunk.toString());
     });
   });
 });
 
-server.listen(3000, () => console.log("Socket server started"));
+// この server.listen に統一！
+server.listen(PORT, () => {
+  console.log(`Server & Socket.IO running on port ${PORT}`);
+});
+
+// Expressルーティング追加
 app.use("/bot", require("./routes/bots"));
+
