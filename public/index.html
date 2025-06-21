@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>node cloud bot server</title>
+  <script src="https://unpkg.com/codemirror@5/lib/codemirror.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/codemirror@5/lib/codemirror.css" />
+  <script src="https://unpkg.com/codemirror@5/mode/javascript/javascript.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #editor { height: 300px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h2>新しいBotを作る</h2>
+  <form id="createBotForm">
+    <input name="name" placeholder="Bot名" required />
+    <input name="token" placeholder="Bot Token" required />
+    <button type="submit">作成</button>
+  </form>
+
+  <h2>Bot.js編集</h2>
+  <textarea id="editor">// ここにBotのコードが入る</textarea>
+  <br />
+  <button onclick="saveBot()">保存</button>
+  <button onclick="startBot()">起動</button>
+  <button onclick="stopBot()">停止</button>
+
+  <script>
+    const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+      lineNumbers: true,
+      mode: 'javascript'
+    });
+
+    async function saveBot() {
+      const code = editor.getValue();
+      const res = await fetch("/api/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "mybot", code })
+      });
+      alert(await res.text());
+    }
+
+    async function startBot() {
+      await fetch("/api/start?name=mybot");
+    }
+
+    async function stopBot() {
+      await fetch("/api/stop?name=mybot");
+    }
+
+    document.getElementById('createBotForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const form = new FormData(e.target);
+      const name = form.get("name");
+      const token = form.get("token");
+      await fetch("/api/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, token })
+      });
+      alert("Bot作成しました！");
+    };
+  </script>
+</body>
+</html>
