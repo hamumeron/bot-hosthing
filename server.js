@@ -60,3 +60,18 @@ app.get("/api/stop", (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+const { Server } = require("socket.io");
+const http = require("http");
+const server = http.createServer(app);
+const io = new Server(server);
+
+io.on("connection", (socket) => {
+  socket.on("joinBotLogs", (botId) => {
+    const stream = getLogStreamForBot(botId); // Docker logsから取得
+    stream.on("data", (chunk) => {
+      socket.emit("botLog", chunk.toString());
+    });
+  });
+});
+
+server.listen(3000, () => console.log("Socket server started"));
