@@ -63,5 +63,14 @@
       alert("Bot作成しました！");
     };
   </script>
+  <script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  socket.emit("joinBotLogs", "myBotId");
+  socket.on("botLog", (data) => {
+    document.getElementById("log").textContent += data;
+  });
+</script>
+
 </body>
 </html>
